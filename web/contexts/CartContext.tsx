@@ -24,15 +24,15 @@ const calculateProductPrice = (product: Product, variations?: CartItem['variatio
     basePrice = product.promotionPrice;
   }
   
-  // Se não tem variações, usa o preço base (ou promocional)
+  // Sempre começar com o preço base (ou promocional)
+  let price = basePrice;
+  
+  // Se não tem variações, retorna apenas o preço base
   if ((!product.sizes || product.sizes.length === 0) && 
       (!product.flavors || product.flavors.length === 0) && 
       (!product.edges || product.edges.length === 0)) {
-    return basePrice;
+    return price;
   }
-  
-  // Se tem variações, o preço base é sempre 0 (menor valor)
-  let price = 0;
   
   // Adicionar preço do tamanho selecionado
   if (variations?.size && product.sizes) {

@@ -15,32 +15,9 @@ const calculateMinPrice = (product: Product): number => {
     basePrice = product.promotionPrice;
   }
   
-  // Se não tem variações, retorna apenas o preço base (ou promocional)
-  if ((!product.sizes || product.sizes.length === 0) && 
-      (!product.flavors || product.flavors.length === 0) && 
-      (!product.edges || product.edges.length === 0)) {
-    return basePrice;
-  }
-  
-  // Se tem variações, o preço base é sempre 0 (menor valor)
-  // e somamos apenas as menores variações (considerando promoções)
-  const minSizePrice = product.sizes?.length ? Math.min(...product.sizes.map(s => {
-    if (s.isPromotion && s.promotionPrice !== undefined) {
-      return s.promotionPrice;
-    }
-    return s.price;
-  })) : 0;
-  const minFlavorPrice = product.flavors?.length ? Math.min(...product.flavors.map(f => f.price)) : 0;
-  const minEdgePrice = product.edges?.length ? Math.min(...product.edges.map(e => {
-    if (e.isPromotion && e.promotionPrice !== undefined) {
-      return e.promotionPrice;
-    }
-    return e.price;
-  })) : 0;
-  
-  // O preço base é sempre o menor valor (0 quando tem variações)
-  // e o menor preço total será a soma das menores variações
-  return minSizePrice + minFlavorPrice + minEdgePrice;
+  // Para exibição "A partir de", sempre retornar apenas o preço base (ou promocional)
+  // As variações serão somadas apenas quando o produto for adicionado ao carrinho
+  return basePrice;
 };
 
 // Verificar se o produto tem variações de preço

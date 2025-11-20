@@ -652,20 +652,16 @@ export default function AdminPage() {
               )}
               <p className="text-sm font-semibold text-yellow-400">
               R$ {(() => {
-                // Se não tem variações, retorna apenas o preço base
-                if ((!product.sizes || product.sizes.length === 0) && 
-                    (!product.flavors || product.flavors.length === 0) && 
-                    (!product.edges || product.edges.length === 0)) {
-                  const basePrice = (product as any).basePrice ?? (product as any).price ?? 0;
-                  return basePrice.toFixed(2);
+                let basePrice = (product as any).basePrice ?? (product as any).price ?? 0;
+                
+                // Se tem promoção, usar o preço promocional como base
+                if (product.isPromotion && product.promotionPrice) {
+                  basePrice = product.promotionPrice;
                 }
                 
-                // Se tem variações, o preço base é sempre 0 (menor valor)
-                // e somamos apenas as menores variações
-                const minSizePrice = product.sizes?.length ? Math.min(...product.sizes.map(s => s.price)) : 0;
-                const minFlavorPrice = product.flavors?.length ? Math.min(...product.flavors.map(f => f.price)) : 0;
-                const minEdgePrice = product.edges?.length ? Math.min(...product.edges.map(e => e.price)) : 0;
-                return (minSizePrice + minFlavorPrice + minEdgePrice).toFixed(2);
+                // Para exibição "A partir de", sempre retornar apenas o preço base (ou promocional)
+                // As variações serão somadas apenas quando o produto for adicionado ao carrinho
+                return basePrice.toFixed(2);
               })()}
               </p>
             </div>
