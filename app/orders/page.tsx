@@ -299,7 +299,9 @@ export default function OrdersPage() {
           <div class="section">
             <div class="section-title">📦 Itens do Pedido</div>
             <div class="items-list">
-              ${order.items.map(item => `
+              ${order.items.map(item => {
+                const variations = item.variations as { size?: string; flavor?: string; edge?: string; extras?: string[] } | undefined;
+                return `
                 <div class="item-row">
                   <div class="item-header">
                     <div style="display: flex; align-items: center;">
@@ -309,16 +311,17 @@ export default function OrdersPage() {
                     <span class="item-price">R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
                   </div>
                   <div class="item-details">
-                    ${item.variations?.size ? `<div class="item-detail-line">• Tamanho: ${item.variations.size}</div>` : ''}
-                    ${item.variations?.flavor ? `<div class="item-detail-line">• Sabor: ${item.variations.flavor}</div>` : ''}
-                    ${item.variations?.edge ? `<div class="item-detail-line">• Borda: ${item.variations.edge}</div>` : ''}
-                    ${item.variations?.extras && item.variations.extras.length > 0 ? `<div class="item-detail-line">• Extras: ${item.variations.extras.join(', ')}</div>` : ''}
+                    ${variations?.size ? `<div class="item-detail-line">• Tamanho: ${variations.size}</div>` : ''}
+                    ${variations?.flavor ? `<div class="item-detail-line">• Sabor: ${variations.flavor}</div>` : ''}
+                    ${variations?.edge ? `<div class="item-detail-line">• Borda: ${variations.edge}</div>` : ''}
+                    ${variations?.extras && variations.extras.length > 0 ? `<div class="item-detail-line">• Extras: ${variations.extras.join(', ')}</div>` : ''}
                     <div class="item-detail-line" style="margin-top: 4px; color: #888;">
                       R$ ${item.price.toFixed(2).replace('.', ',')} un.
                     </div>
                   </div>
                 </div>
-              `).join('')}
+              `;
+              }).join('')}
             </div>
           </div>
 
@@ -453,7 +456,9 @@ export default function OrdersPage() {
                   {/* Itens do Pedido */}
                   <div className="p-4">
                     <div className="space-y-3 mb-4">
-                      {order.items.map((item, index) => (
+                      {order.items.map((item, index) => {
+                        const variations = item.variations as { size?: string; flavor?: string; edge?: string; extras?: string[] } | undefined;
+                        return (
                         <div key={index} className="flex items-start gap-3">
                           <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center">
                             <span className="text-2xl">🍕</span>
@@ -462,19 +467,24 @@ export default function OrdersPage() {
                             <p className="font-semibold text-gray-800 truncate">
                               {item.name}
                             </p>
-                            {item.variations?.size && (
+                            {variations?.size && (
                               <p className="text-xs text-gray-500">
-                                Tamanho: {item.variations.size}
+                                Tamanho: {variations.size}
                               </p>
                             )}
-                            {item.variations?.edge && (
+                            {variations?.flavor && (
                               <p className="text-xs text-gray-500">
-                                Borda: {item.variations.edge}
+                                Sabor: {variations.flavor}
                               </p>
                             )}
-                            {item.variations?.extras && item.variations.extras.length > 0 && (
+                            {variations?.edge && (
                               <p className="text-xs text-gray-500">
-                                Extras: {item.variations.extras.join(', ')}
+                                Borda: {variations.edge}
+                              </p>
+                            )}
+                            {variations?.extras && variations.extras.length > 0 && (
+                              <p className="text-xs text-gray-500">
+                                Extras: {variations.extras.join(', ')}
                               </p>
                             )}
                             <p className="text-sm text-gray-600 mt-1">
@@ -487,7 +497,8 @@ export default function OrdersPage() {
                             </p>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Resumo do Pedido */}

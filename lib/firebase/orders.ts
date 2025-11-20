@@ -12,13 +12,19 @@ import {
 } from 'firebase/firestore';
 import { db } from './config';
 
+export interface OrderItemVariations {
+  size?: string;
+  flavor?: string;
+  edge?: string;
+  extras?: string[];
+}
+
 export interface OrderItem {
   productId: string;
   productName: string;
   price: number;
   quantity: number;
-  size?: string;
-  extras?: string[];
+  variations?: OrderItemVariations;
 }
 
 export interface Order {

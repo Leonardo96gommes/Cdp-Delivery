@@ -22,9 +22,9 @@ const calculateMinPrice = (product: Product): number => {
 
 // Verificar se o produto tem variações de preço
 const hasPriceVariations = (product: Product): boolean => {
-  const hasSizes = product.sizes && product.sizes.length > 0;
-  const hasFlavors = product.flavors && product.flavors.length > 0;
-  const hasEdges = product.edges && product.edges.length > 0;
+  const hasSizes = Boolean(product.sizes?.length);
+  const hasFlavors = Boolean(product.flavors?.length);
+  const hasEdges = Boolean(product.edges?.length);
   return hasSizes || hasFlavors || hasEdges;
 };
 

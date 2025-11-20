@@ -16,6 +16,8 @@ export interface Order {
     quantity: number;
     variations?: {
       size?: string;
+      flavor?: string;
+      edge?: string;
       extras?: string[];
     };
   }>;

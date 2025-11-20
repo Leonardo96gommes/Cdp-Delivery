@@ -1,6 +1,9 @@
 'use client';
 
+import type { ComponentProps } from 'react';
 import { CldImage } from 'next-cloudinary';
+
+type CloudinaryCrop = NonNullable<ComponentProps<typeof CldImage>['crop']>;
 
 interface CldImageWrapperProps {
   src: string;
@@ -8,10 +11,7 @@ interface CldImageWrapperProps {
   height?: number;
   alt?: string;
   className?: string;
-  crop?: {
-    type?: string;
-    source?: boolean;
-  };
+  crop?: CloudinaryCrop;
   quality?: 'auto' | number;
   fetchFormat?: 'auto' | 'webp' | 'jpg' | 'png';
   [key: string]: any; // Para permitir outras props do CldImage
@@ -58,6 +58,8 @@ export default function CldImageWrapper({
     }
   }
 
+  const defaultCrop: CloudinaryCrop = { type: 'auto', source: true };
+
   return (
     <CldImage
       src={publicId}
@@ -65,7 +67,7 @@ export default function CldImageWrapper({
       height={height}
       alt={alt}
       className={className}
-      crop={crop || { type: 'auto', source: true }}
+      crop={crop ?? defaultCrop}
       quality={quality}
       format={fetchFormat}
       {...props}
