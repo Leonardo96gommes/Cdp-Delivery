@@ -10,26 +10,61 @@ O erro acontece quando a Vercel não encontra o `package.json` do Next.js porque
 
 **Esta é a ÚNICA forma de resolver o problema!** Você DEVE configurar o Root Directory no painel da Vercel.
 
-### Passo a Passo:
+### 📸 Passo a Passo Detalhado:
 
-1. **Acesse o painel da Vercel**: https://vercel.com/dashboard
-2. **Selecione seu projeto** (ou crie um novo se ainda não tiver)
-3. **Vá em Settings** (Configurações) - ícone de engrenagem
-4. **No menu lateral, clique em "General"**
-5. **Role até a seção "Root Directory"**
-6. **Clique em "Edit"** ou no botão de editar ao lado
-7. **Selecione ou digite**: `web`
-   - Pode selecionar navegando pelas pastas
-   - Ou digitar diretamente: `web`
-8. **Clique em "Save"**
-9. **Vá em Deployments** e clique em **"Redeploy"** no último deployment
-   - Ou faça um novo push para o repositório (a Vercel detectará automaticamente)
+#### Opção A: Se você JÁ TEM um projeto na Vercel
+
+1. **Acesse**: https://vercel.com/dashboard
+2. **Clique no seu projeto** (nome do projeto)
+3. **Vá em "Settings"** (ícone de engrenagem ⚙️ no topo)
+4. **No menu lateral esquerdo, clique em "General"**
+5. **Role a página para baixo** até encontrar a seção **"Root Directory"**
+6. **Clique no botão "Edit"** ao lado de "Root Directory"
+7. **Selecione a pasta `web`**:
+   - Clique no campo de texto
+   - Digite: `web` (em minúsculas)
+   - Ou navegue: clique em "Browse" e selecione a pasta `web`
+8. **Clique em "Save"** (botão azul)
+9. **IMPORTANTE**: Agora faça um **novo deploy**:
+   - Vá em "Deployments" (no menu superior)
+   - Clique nos **três pontinhos (...)** do último deployment
+   - Selecione **"Redeploy"**
+   - Ou simplesmente faça um novo commit/push (a Vercel detectará automaticamente)
+
+#### Opção B: Se você ESTÁ CRIANDO um novo projeto
+
+1. **Acesse**: https://vercel.com/dashboard
+2. **Clique em "Add New..."** > **"Project"**
+3. **Importe seu repositório** do GitHub
+4. **ANTES de clicar em "Deploy"**, configure:
+   - **Root Directory**: Clique em "Edit" e selecione/digite `web`
+   - **Framework Preset**: Next.js (deve detectar automaticamente após configurar Root Directory)
+5. **Configure as Environment Variables** (veja seção abaixo)
+6. **Clique em "Deploy"**
+
+### 🔍 Como Verificar se está Configurado Corretamente:
+
+1. Vá em **Settings** > **General**
+2. Verifique que **"Root Directory"** mostra: `web`
+3. Verifique que **"Framework Preset"** mostra: `Next.js`
+4. Se não estiver correto, clique em "Edit" e corrija
 
 ### ⚠️ IMPORTANTE
 
 - **NÃO** remova essa configuração depois
 - A Vercel usará a pasta `web/` como diretório raiz do projeto Next.js
 - Todos os comandos (install, build, dev) serão executados dentro da pasta `web/`
+- **Após configurar**, você DEVE fazer um novo deploy (não usará cache do deploy anterior)
+
+### 🔄 Solução Alternativa (se o Root Directory não funcionar)
+
+Um arquivo `package.json` foi criado na raiz do projeto como fallback. Isso pode ajudar a Vercel a detectar o projeto, mas **ainda é necessário configurar o Root Directory para `web`** no painel da Vercel.
+
+**Importante**: Se você configurou o Root Directory mas ainda recebe o erro, tente:
+1. Verificar se o Root Directory está realmente salvo (recarregue a página)
+2. Fazer um **Redeploy** completo (não apenas um novo commit)
+3. Limpar o cache do build (na Vercel, vá em Deployments > ... > Clear Build Cache)
+4. Verificar se o `web/package.json` existe e contém `"next"` nas dependências
 
 ## 📋 Checklist de Deploy
 

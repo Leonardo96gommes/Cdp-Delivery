@@ -1,0 +1,18 @@
+{
+  "name": "nostrapizza-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "cd web && npm ci && npm run build",
+    "dev": "cd web && npm run dev",
+    "start": "cd web && npm start",
+    "install": "cd web && npm ci"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "workspaces": [
+    "web"
+  ]
+}
+
