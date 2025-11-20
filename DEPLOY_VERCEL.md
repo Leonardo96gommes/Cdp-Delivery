@@ -2,35 +2,34 @@
 
 Este guia mostra como configurar corretamente o projeto NostraPizza na Vercel.
 
-## ⚠️ Problema: Erro NOT_FOUND
+## ⚠️ Problema: Erro NOT_FOUND ou "No Next.js version detected"
 
-O erro `NOT_FOUND` acontece quando a Vercel não encontra o diretório raiz do projeto Next.js. Como o projeto está na pasta `web/`, é necessário configurar isso na Vercel.
+O erro acontece quando a Vercel não encontra o `package.json` do Next.js porque o projeto está na pasta `web/`, mas a Vercel está procurando na raiz do repositório.
 
-## ✅ Solução 1: Configurar Root Directory no Painel da Vercel (Recomendado)
+## ✅ Solução: Configurar Root Directory no Painel da Vercel
+
+**Esta é a ÚNICA forma de resolver o problema!** Você DEVE configurar o Root Directory no painel da Vercel.
+
+### Passo a Passo:
 
 1. **Acesse o painel da Vercel**: https://vercel.com/dashboard
-2. **Selecione seu projeto**
-3. **Vá em Settings** (Configurações)
+2. **Selecione seu projeto** (ou crie um novo se ainda não tiver)
+3. **Vá em Settings** (Configurações) - ícone de engrenagem
 4. **No menu lateral, clique em "General"**
 5. **Role até a seção "Root Directory"**
-6. **Clique em "Edit"**
+6. **Clique em "Edit"** ou no botão de editar ao lado
 7. **Selecione ou digite**: `web`
+   - Pode selecionar navegando pelas pastas
+   - Ou digitar diretamente: `web`
 8. **Clique em "Save"**
-9. **Faça um novo deploy** (ou aguarde o deploy automático)
+9. **Vá em Deployments** e clique em **"Redeploy"** no último deployment
+   - Ou faça um novo push para o repositório (a Vercel detectará automaticamente)
 
-## ✅ Solução 2: Usar arquivo vercel.json (Já criado)
+### ⚠️ IMPORTANTE
 
-Um arquivo `vercel.json` já foi criado na raiz do projeto com as configurações básicas. Certifique-se de que está configurado assim:
-
-```json
-{
-  "buildCommand": "cd web && npm install && npm run build",
-  "outputDirectory": "web/.next",
-  "framework": "nextjs"
-}
-```
-
-**Importante**: Se você usar esta solução, ainda é recomendado configurar o "Root Directory" no painel da Vercel.
+- **NÃO** remova essa configuração depois
+- A Vercel usará a pasta `web/` como diretório raiz do projeto Next.js
+- Todos os comandos (install, build, dev) serão executados dentro da pasta `web/`
 
 ## 📋 Checklist de Deploy
 
