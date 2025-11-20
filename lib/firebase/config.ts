@@ -1,26 +1,66 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 // Configuração do Firebase
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
+const requiredEnvKeys = [
+  'NEXT_PUBLIC_FIREBASE_API_KEY',
+  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
+  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+  'NEXT_PUBLIC_FIREBASE_APP_ID',
+] as const;
 
-// Inicializar serviços
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const storage = getStorage(app);
+const missingEnvKeys = requiredEnvKeys.filter(key => !process.env[key]);
+
+const shouldInitializeFirebase = missingEnvKeys.length === 0;
+
+const createUnavailableServiceProxy = <T extends object>(serviceName: string): T => {
+  return new Proxy(
+    {},
+    {
+      get() {
+        throw new Error(
+          `[Firebase] ${serviceName} indisponível. Configure as variáveis de ambiente necessárias.` +
+            (missingEnvKeys.length ? ` Variáveis ausentes: ${missingEnvKeys.join(', ')}` : ''),
+        );
+      },
+    },
+  ) as T;
+};
+
+let app: FirebaseApp | null = null;
+
+if (shouldInitializeFirebase) {
+  const apps = getApps();
+  app = apps.length ? getApp() : initializeApp(firebaseConfig);
+} else if (process.env.NODE_ENV !== 'production') {
+  console.warn(
+    '[Firebase] Variáveis de ambiente ausentes. Serviços do Firebase não foram inicializados:',
+    missingEnvKeys.join(', '),
+  );
+}
+
+export const firebaseApp = app;
+export const isFirebaseConfigured = shouldInitializeFirebase;
+
+export const db: Firestore = app ? getFirestore(app) : createUnavailableServiceProxy<Firestore>('Firestore');
+export const auth: Auth = app ? getAuth(app) : createUnavailableServiceProxy<Auth>('Auth');
+export const storage: FirebaseStorage = app
+  ? getStorage(app)
+  : createUnavailableServiceProxy<FirebaseStorage>('Storage');
 
 export default app;
 
