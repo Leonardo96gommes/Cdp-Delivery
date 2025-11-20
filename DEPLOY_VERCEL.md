@@ -2,9 +2,26 @@
 
 Este guia mostra como configurar corretamente o projeto NostraPizza na Vercel.
 
-## ⚠️ Problema: Erro NOT_FOUND ou "No Next.js version detected"
+## ⚠️ Problemas Comuns
 
+### Erro: "No Next.js version detected" ou "NOT_FOUND"
 O erro acontece quando a Vercel não encontra o `package.json` do Next.js porque o projeto está na pasta `web/`, mas a Vercel está procurando na raiz do repositório.
+
+### Erro: "Command 'npm install' exited with SIGKILL" 
+**⚠️ ATENÇÃO**: Este erro geralmente significa que o **Root Directory NÃO está configurado corretamente**!
+
+Quando isso acontece:
+- A Vercel está tentando instalar dependências na raiz do projeto
+- Não encontra o `package.json` com Next.js
+- O processo é terminado (SIGKILL)
+
+**SOLUÇÃO IMEDIATA**: 
+1. Verifique se o Root Directory está configurado para `web` (veja seção abaixo)
+2. Se não estiver configurado, **configure AGORA**
+3. Limpe o cache: **Deployments** > **...** > **Clear Build Cache**
+4. Faça um **Redeploy** completo
+
+---
 
 ## ✅ Solução: Configurar Root Directory no Painel da Vercel
 
@@ -56,15 +73,35 @@ O erro acontece quando a Vercel não encontra o `package.json` do Next.js porque
 - Todos os comandos (install, build, dev) serão executados dentro da pasta `web/`
 - **Após configurar**, você DEVE fazer um novo deploy (não usará cache do deploy anterior)
 
+### 🔧 Verificações Importantes
+
+Se você está recebendo erros (SIGKILL, NOT_FOUND, etc.), verifique:
+
+1. **Root Directory está configurado?**
+   - Vá em **Settings** > **General** > **Root Directory**
+   - Deve mostrar: `web` (não vazio, não "/", não "." )
+   - Se estiver diferente, **configure para `web`** e salve
+
+2. **Cache limpo?**
+   - Vá em **Deployments** > clique nos **...** do último deployment
+   - Selecione **"Clear Build Cache"**
+   - Faça um novo **Redeploy**
+
+3. **Arquivo `web/package.json` existe?**
+   - Verifique no seu repositório GitHub
+   - O arquivo deve existir em `web/package.json`
+   - Deve conter `"next"` nas dependências
+
+4. **Deploy é novo?**
+   - Após configurar o Root Directory, você **DEVE fazer um novo deploy**
+   - Não basta apenas fazer commit/push
+   - Vá em **Deployments** > **Redeploy**
+
 ### 🔄 Solução Alternativa (se o Root Directory não funcionar)
 
 Um arquivo `package.json` foi criado na raiz do projeto como fallback. Isso pode ajudar a Vercel a detectar o projeto, mas **ainda é necessário configurar o Root Directory para `web`** no painel da Vercel.
 
-**Importante**: Se você configurou o Root Directory mas ainda recebe o erro, tente:
-1. Verificar se o Root Directory está realmente salvo (recarregue a página)
-2. Fazer um **Redeploy** completo (não apenas um novo commit)
-3. Limpar o cache do build (na Vercel, vá em Deployments > ... > Clear Build Cache)
-4. Verificar se o `web/package.json` existe e contém `"next"` nas dependências
+**Importante**: O `package.json` na raiz NÃO substitui a necessidade de configurar o Root Directory! Você DEVE configurar o Root Directory para `web` no painel da Vercel.
 
 ## 📋 Checklist de Deploy
 
@@ -116,6 +153,23 @@ Um arquivo `package.json` foi criado na raiz do projeto como fallback. Isso pode
 - Verifique se todas as dependências estão no `package.json`
 - Verifique se há erros de TypeScript no build
 - Confira os logs de build na Vercel
+
+### Erro: "Command 'npm install' exited with SIGKILL" ou "SIGKILL"
+Este erro geralmente acontece por:
+- **Root Directory não configurado**: A Vercel está tentando instalar na raiz ao invés de `web/`
+- **Solução**:
+  1. **VERIFIQUE** se o Root Directory está configurado para `web` no painel da Vercel
+  2. Vá em **Settings** > **General** > **Root Directory** e confirme que está `web`
+  3. Se não estiver, configure para `web` e faça um novo deploy
+  4. Limpe o cache: **Deployments** > **...** > **Clear Build Cache**
+  5. Faça um **Redeploy** completo
+  
+- **Memória insuficiente** (menos comum):
+  - O build pode estar usando muita memória
+  - Tente otimizar dependências desnecessárias
+  - Use `npm ci` ao invés de `npm install` (já está configurado)
+
+**IMPORTANTE**: O erro SIGKILL geralmente significa que o Root Directory NÃO está configurado corretamente. Verifique isso primeiro!
 
 ### Erro: "Function not found" ou "404"
 - Certifique-se de que o Root Directory está configurado para `web`
