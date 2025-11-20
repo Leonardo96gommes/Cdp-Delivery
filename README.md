@@ -173,8 +173,8 @@ NostraPizza é uma plataforma completa para delivery de alimentos, desenvolvida 
 ### Passo 1: Clonar o Repositório
 
 ```bash
-git clone https://github.com/Leonardo96gommes/Card-pio-Delivery.git
-cd Card-pio-Delivery/web
+git clone https://github.com/Leonardo96gommes/Cdp-Delivery.git
+cd Cdp-Delivery/web
 ```
 
 ### Passo 2: Instalar Dependências
