@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Product } from '@/lib/data';
+import { useStoreSettings } from '@/contexts/StoreSettingsContext';
 
 // Função para calcular o preço mínimo do produto (para exibição)
 // O preço base sempre será o menor valor possível
@@ -50,6 +51,20 @@ const hasPriceVariations = (product: Product): boolean => {
   return hasSizes || hasFlavors || hasEdges;
 };
 
+// Verificar se o produto tem promoção (produto, tamanho ou borda)
+const hasPromotion = (product: Product): boolean => {
+  // Promoção no produto inteiro
+  if (product.isPromotion) return true;
+  
+  // Promoção em algum tamanho
+  if (product.sizes && product.sizes.some(size => size.isPromotion)) return true;
+  
+  // Promoção em alguma borda
+  if (product.edges && product.edges.some(edge => edge.isPromotion)) return true;
+  
+  return false;
+};
+
 interface ProductCardProps {
   product: Product;
   onAddToCart?: () => void;
@@ -58,24 +73,44 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onAddToCart, isHorizontal = false, onClick }: ProductCardProps) {
+  const { settings } = useStoreSettings();
+  const isStoreOpen = settings?.isOpen ?? true;
+  
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Verificar se a loja está aberta
+    if (!isStoreOpen) {
+      const openingTime = settings?.openingTime || '18:00';
+      const closingTime = settings?.closingTime || '23:00';
+      alert(`A loja está fechada no momento.\n\nHorário de funcionamento: ${openingTime} às ${closingTime}`);
+      return;
+    }
+    
+    onAddToCart?.();
+  };
+  
   if (isHorizontal) {
     return (
       <div 
         onClick={onClick}
         className="flex bg-white rounded-xl mx-4 mb-3 p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
       >
-        {product.isPromotion && (
-          <div className="absolute top-2 right-2 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold z-10">
-            PROMOÇÃO
+        {hasPromotion(product) && (
+          <div className="absolute top-2 right-2 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold z-10 shadow-lg">
+            PROMO
           </div>
         )}
-        <Image
-          src={product.image}
-          alt={product.name}
-          width={80}
-          height={80}
-          className="rounded-xl object-cover"
-        />
+        <div className="relative">
+          <Image
+            src={product.image}
+            alt={product.name}
+            width={80}
+            height={80}
+            className="rounded-xl object-cover"
+          />
+        </div>
         <div className="flex-1 ml-3 flex flex-col justify-between">
           <div>
             <h3 className="text-base font-semibold text-gray-800 line-clamp-1">{product.name}</h3>
@@ -97,11 +132,13 @@ export default function ProductCard({ product, onAddToCart, isHorizontal = false
               </div>
             </div>
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                onAddToCart?.();
-              }}
-              className="bg-yellow-400 text-white px-4 py-1.5 rounded-full font-semibold text-sm hover:bg-yellow-500 transition-colors"
+              onClick={handleAddToCartClick}
+              disabled={!isStoreOpen}
+              className={`px-4 py-1.5 rounded-full font-semibold text-sm transition-colors ${
+                isStoreOpen
+                  ? 'bg-yellow-400 text-white hover:bg-yellow-500'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
             >
               Pedir
             </button>
@@ -116,18 +153,20 @@ export default function ProductCard({ product, onAddToCart, isHorizontal = false
       onClick={onClick}
       className="bg-white rounded-2xl w-full shadow-sm hover:shadow-md transition-shadow overflow-hidden cursor-pointer relative"
     >
-      {product.isPromotion && (
-        <div className="absolute top-2 right-2 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold z-10">
-          PROMOÇÃO
-        </div>
-      )}
-      <Image
-        src={product.image}
-        alt={product.name}
-        width={180}
-        height={140}
-        className="w-full h-[140px] md:h-[180px] object-cover"
-      />
+      <div className="relative">
+        {hasPromotion(product) && (
+          <div className="absolute top-2 right-2 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold z-10 shadow-lg">
+            PROMO
+          </div>
+        )}
+        <Image
+          src={product.image}
+          alt={product.name}
+          width={180}
+          height={140}
+          className="w-full h-[140px] md:h-[180px] object-cover"
+        />
+      </div>
       <div className="p-2 md:p-3">
         <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-1 line-clamp-2">{product.name}</h3>
         <p className="text-xs text-gray-600 mb-2 line-clamp-2">{product.description}</p>
@@ -148,11 +187,13 @@ export default function ProductCard({ product, onAddToCart, isHorizontal = false
             </div>
           </div>
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              onAddToCart?.();
-            }}
-            className="bg-yellow-400 text-white px-3 py-1.5 rounded-full font-semibold text-xs md:text-sm hover:bg-yellow-500 transition-colors w-full md:w-auto"
+            onClick={handleAddToCartClick}
+            disabled={!isStoreOpen}
+            className={`px-3 py-1.5 rounded-full font-semibold text-xs md:text-sm transition-colors w-full md:w-auto ${
+              isStoreOpen
+                ? 'bg-yellow-400 text-white hover:bg-yellow-500'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
           >
             Adicionar
           </button>

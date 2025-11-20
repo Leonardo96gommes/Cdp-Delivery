@@ -66,27 +66,68 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Salvar produtos no localStorage sempre que houver mudanças
+  // Nota: O salvamento também é feito diretamente nas funções para garantir persistência imediata
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (products.length > 0) {
+    // Só salvar se não for o carregamento inicial (evitar sobrescrever com defaultProducts)
+    const savedProducts = localStorage.getItem('nostrapizza_products');
+    if (savedProducts && products.length > 0) {
+      try {
+        const parsed = JSON.parse(savedProducts);
+        // Só atualizar se os produtos realmente mudaram (evitar loop)
+        const currentIds = products.map(p => p.id).sort().join(',');
+        const savedIds = parsed.map((p: Product) => p.id).sort().join(',');
+        if (currentIds !== savedIds || JSON.stringify(products) !== savedProducts) {
+          localStorage.setItem('nostrapizza_products', JSON.stringify(products));
+        }
+      } catch (error) {
+        // Se houver erro ao comparar, salvar de qualquer forma
+        localStorage.setItem('nostrapizza_products', JSON.stringify(products));
+      }
+    } else if (products.length > 0) {
       localStorage.setItem('nostrapizza_products', JSON.stringify(products));
     }
   }, [products]);
 
   const updateProducts = (newProducts: Product[]) => {
     setProducts(newProducts);
+    // Salvar imediatamente
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nostrapizza_products', JSON.stringify(newProducts));
+    }
   };
 
   const addProduct = (product: Product) => {
-    setProducts([...products, product]);
+    setProducts(prev => {
+      const updated = [...prev, product];
+      // Salvar imediatamente
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nostrapizza_products', JSON.stringify(updated));
+      }
+      return updated;
+    });
   };
 
   const updateProduct = (productId: string, product: Product) => {
-    setProducts(products.map(p => p.id === productId ? product : p));
+    setProducts(prev => {
+      const updated = prev.map(p => p.id === productId ? product : p);
+      // Salvar imediatamente
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nostrapizza_products', JSON.stringify(updated));
+      }
+      return updated;
+    });
   };
 
   const deleteProduct = (productId: string) => {
-    setProducts(products.filter(p => p.id !== productId));
+    setProducts(prev => {
+      const updated = prev.filter(p => p.id !== productId);
+      // Salvar imediatamente
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nostrapizza_products', JSON.stringify(updated));
+      }
+      return updated;
+    });
   };
 
   return (

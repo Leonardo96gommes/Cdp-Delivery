@@ -5,7 +5,9 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 export interface Order {
   id: string;
   customerName: string;
+  phone?: string;
   address: string;
+  referencePoint?: string;
   paymentMethod: string;
   items: Array<{
     id: string;

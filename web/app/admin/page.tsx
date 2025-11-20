@@ -29,13 +29,20 @@ import { useStoreSettings } from '@/contexts/StoreSettingsContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useProducts } from '@/contexts/ProductsContext';
 import { useRouter } from 'next/navigation';
+import { 
+  getDeliveryFees, 
+  addDeliveryFee, 
+  updateDeliveryFee, 
+  deleteDeliveryFee,
+  DeliveryFee 
+} from '@/lib/deliveryFees';
 
 export default function AdminPage() {
   const router = useRouter();
   const { logout, user } = useAuth();
   const { settings, updateStoreSettings } = useStoreSettings();
   const { products: contextProducts, updateProducts, addProduct, updateProduct, deleteProduct: deleteProductFromContext } = useProducts();
-  const { categories: contextCategories, updateCategoryOrder, updateCategories } = useCategories();
+  const { categories: contextCategories, updateCategoryOrder, addCategory, editCategory, removeCategory } = useCategories();
   const [activeTab, setActiveTab] = useState('dashboard');
   
   // Usar valores do Firebase ou valores padrão
@@ -46,7 +53,6 @@ export default function AdminPage() {
   const [closingTime, setClosingTime] = useState(settings?.closingTime || '23:00');
   const [selectedThemeColor, setSelectedThemeColor] = useState(settings?.themeColor || '#FFC107');
   const [logo, setLogo] = useState(settings?.logo || '');
-  const [banner, setBanner] = useState(settings?.banner || '');
 
   // Atualizar estados locais quando settings mudarem
   useEffect(() => {
@@ -57,7 +63,6 @@ export default function AdminPage() {
       setClosingTime(settings.closingTime || '23:00');
       setSelectedThemeColor(settings.themeColor || '#FFC107');
       setLogo(settings.logo || '');
-      setBanner(settings.banner || '');
     }
   }, [settings]);
 
@@ -97,8 +102,10 @@ export default function AdminPage() {
 
       const newItems = arrayMove([...contextCategories], oldIndex, newIndex);
       
-      // Atualizar a ordem usando o contexto
-      updateCategoryOrder(newItems);
+      // Atualizar a ordem usando o contexto (assíncrono)
+      updateCategoryOrder(newItems).catch(error => {
+        console.error('Erro ao atualizar ordem das categorias:', error);
+      });
     }
   };
   
@@ -251,6 +258,20 @@ export default function AdminPage() {
       return;
     }
 
+    // Processar tamanhos com promoções
+    const processedSizes = productForm.sizes.length > 0 ? productForm.sizes.map(size => ({
+      ...size,
+      isPromotion: size.isPromotion || false,
+      promotionPrice: size.isPromotion && size.promotionPrice !== undefined ? (typeof size.promotionPrice === 'number' ? size.promotionPrice : parseFloat(String(size.promotionPrice)) || 0) : undefined,
+    })) : undefined;
+
+    // Processar bordas com promoções
+    const processedEdges = productForm.edges.length > 0 ? productForm.edges.map(edge => ({
+      ...edge,
+      isPromotion: edge.isPromotion || false,
+      promotionPrice: edge.isPromotion && edge.promotionPrice !== undefined ? (typeof edge.promotionPrice === 'number' ? edge.promotionPrice : parseFloat(String(edge.promotionPrice)) || 0) : undefined,
+    })) : undefined;
+
     const productData: Product = {
       id: editingProduct?.id || Date.now().toString(),
       name: productForm.name,
@@ -258,10 +279,10 @@ export default function AdminPage() {
       basePrice: parseFloat(productForm.basePrice),
       image: productForm.image || 'https://via.placeholder.com/400',
       category: productForm.category,
-      sizes: productForm.sizes.length > 0 ? productForm.sizes : undefined,
+      sizes: processedSizes,
       flavors: productForm.flavors.length > 0 ? productForm.flavors : undefined,
-      edges: productForm.edges.length > 0 ? productForm.edges : undefined,
-      isPromotion: productForm.isPromotion,
+      edges: processedEdges,
+      isPromotion: productForm.isPromotion || false,
       promotionPrice: productForm.isPromotion && productForm.promotionPrice ? parseFloat(productForm.promotionPrice) : undefined,
     };
 
@@ -270,6 +291,15 @@ export default function AdminPage() {
     } else {
       addProduct(productData);
       setActiveProducts({ ...activeProducts, [productData.id]: true });
+    }
+
+    // Forçar salvamento imediato no localStorage
+    if (typeof window !== 'undefined') {
+      const currentProducts = contextProducts;
+      const updatedProducts = editingProduct
+        ? currentProducts.map(p => p.id === editingProduct.id ? productData : p)
+        : [...currentProducts, productData];
+      localStorage.setItem('nostrapizza_products', JSON.stringify(updatedProducts));
     }
 
     setShowProductModal(false);
@@ -399,34 +429,51 @@ export default function AdminPage() {
     setShowCategoryModal(true);
   };
 
-  const handleSaveCategory = () => {
+  const handleSaveCategory = async () => {
     if (!categoryForm.name) {
       alert('Preencha o nome da categoria');
       return;
     }
 
-    const categoryData: Category = {
-      id: editingCategory?.id || Date.now().toString(),
-      name: categoryForm.name,
-      color: categoryForm.color,
-      order: editingCategory?.order ?? adminCategories.length,
-    };
+    try {
+      if (editingCategory) {
+        // Editar categoria existente
+        await editCategory(editingCategory.id, {
+          name: categoryForm.name,
+          color: categoryForm.color,
+          order: editingCategory.order, // Preservar a ordem existente
+        });
+      } else {
+        // Criar nova categoria
+        await addCategory({
+          name: categoryForm.name,
+          color: categoryForm.color,
+          order: contextCategories.length,
+        });
+      }
 
-    if (editingCategory) {
-      const updated = adminCategories.map(c => c.id === editingCategory.id ? categoryData : c);
-      updateCategories(updated);
-    } else {
-      updateCategories([...adminCategories, categoryData]);
+      setShowCategoryModal(false);
+      setEditingCategory(null);
+    } catch (error) {
+      console.error('Erro ao salvar categoria:', error);
+      alert('Erro ao salvar categoria. Tente novamente.');
     }
-
-    setShowCategoryModal(false);
-    setEditingCategory(null);
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
-    if (confirm('Deseja realmente excluir esta categoria? Produtos associados podem ser afetados.')) {
-      const updated = adminCategories.filter(c => c.id !== categoryId);
-      updateCategories(updated);
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!confirm('Deseja realmente excluir esta categoria? Produtos associados podem ser afetados.')) {
+      return;
+    }
+
+    try {
+      console.log('Iniciando exclusão da categoria:', categoryId);
+      await removeCategory(categoryId);
+      console.log('Categoria excluída com sucesso');
+      // Não mostrar alerta de sucesso, pois pode ser uma categoria padrão local
+      // A atualização visual será feita automaticamente pelo listener ou pelo estado local
+    } catch (error) {
+      console.error('Erro ao deletar categoria:', error);
+      alert(`Erro ao deletar categoria: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   };
 
@@ -518,7 +565,13 @@ export default function AdminPage() {
                     </div>
                     <p className="text-xs text-gray-500 mb-1">{formatDate(order.createdAt)}</p>
                     <p className="text-sm text-gray-800 font-semibold">{order.customerName}</p>
+                    {order.phone && (
+                      <p className="text-xs text-gray-600">📞 {order.phone}</p>
+                    )}
                     <p className="text-xs text-gray-600">{order.address}</p>
+                    {order.referencePoint && (
+                      <p className="text-xs text-gray-500 italic">📍 {order.referencePoint}</p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-bold text-yellow-400">R$ {order.total.toFixed(2)}</p>
@@ -688,8 +741,13 @@ export default function AdminPage() {
             <IoPencil className="w-5 h-5 text-blue-500" />
           </button>
           <button
-            onClick={() => handleDeleteCategory(category.id)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDeleteCategory(category.id);
+            }}
             className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+            type="button"
           >
             <IoTrash className="w-5 h-5 text-red-500" />
           </button>
@@ -697,6 +755,243 @@ export default function AdminPage() {
       </div>
     );
   };
+
+  // Estados para gerenciar taxas de entrega
+  const [deliveryFees, setDeliveryFees] = useState<DeliveryFee[]>([]);
+  const [showDeliveryFeeModal, setShowDeliveryFeeModal] = useState(false);
+  const [editingDeliveryFee, setEditingDeliveryFee] = useState<DeliveryFee | null>(null);
+  const [deliveryFeeForm, setDeliveryFeeForm] = useState({
+    neighborhood: '',
+    fee: '',
+    city: 'Belo Jardim',
+    state: 'PE',
+  });
+
+  // Carregar taxas de entrega
+  useEffect(() => {
+    if (activeTab === 'delivery') {
+      setDeliveryFees(getDeliveryFees());
+    }
+  }, [activeTab]);
+
+  const handleCreateDeliveryFee = () => {
+    setEditingDeliveryFee(null);
+    setDeliveryFeeForm({
+      neighborhood: '',
+      fee: '',
+      city: 'Belo Jardim',
+      state: 'PE',
+    });
+    setShowDeliveryFeeModal(true);
+  };
+
+  const handleEditDeliveryFee = (fee: DeliveryFee) => {
+    setEditingDeliveryFee(fee);
+    setDeliveryFeeForm({
+      neighborhood: fee.neighborhood,
+      fee: fee.fee.toString(),
+      city: fee.city || 'Belo Jardim',
+      state: fee.state || 'PE',
+    });
+    setShowDeliveryFeeModal(true);
+  };
+
+  const handleSaveDeliveryFee = () => {
+    if (!deliveryFeeForm.neighborhood || !deliveryFeeForm.fee) {
+      alert('Preencha o bairro e a taxa');
+      return;
+    }
+
+    const feeValue = parseFloat(deliveryFeeForm.fee);
+    if (isNaN(feeValue) || feeValue < 0) {
+      alert('Taxa inválida');
+      return;
+    }
+
+    if (editingDeliveryFee) {
+      updateDeliveryFee(editingDeliveryFee.id, {
+        neighborhood: deliveryFeeForm.neighborhood,
+        fee: feeValue,
+        city: deliveryFeeForm.city,
+        state: deliveryFeeForm.state,
+      });
+    } else {
+      addDeliveryFee({
+        neighborhood: deliveryFeeForm.neighborhood,
+        fee: feeValue,
+        city: deliveryFeeForm.city,
+        state: deliveryFeeForm.state,
+      });
+    }
+
+    setDeliveryFees(getDeliveryFees());
+    setShowDeliveryFeeModal(false);
+    setEditingDeliveryFee(null);
+  };
+
+  const handleDeleteDeliveryFee = (id: string) => {
+    if (confirm('Deseja realmente excluir esta taxa de entrega?')) {
+      deleteDeliveryFee(id);
+      setDeliveryFees(getDeliveryFees());
+    }
+  };
+
+  const renderDeliveryFees = () => (
+    <div className="p-4">
+      <button
+        onClick={handleCreateDeliveryFee}
+        className="w-full bg-white border-2 border-dashed border-yellow-400 p-4 rounded-xl mb-4 flex items-center justify-center gap-2 hover:bg-yellow-50 transition-colors"
+      >
+        <IoAddCircle className="w-6 h-6 text-yellow-400" />
+        <span className="text-yellow-400 font-semibold">Adicionar Taxa por Bairro</span>
+      </button>
+
+      <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+        <p className="text-sm text-blue-800">
+          Configure taxas de entrega específicas para cada bairro de Belo Jardim - PE. 
+          Quando um cliente buscar um CEP, a taxa correspondente será aplicada automaticamente.
+        </p>
+      </div>
+
+      {deliveryFees.length === 0 ? (
+        <div className="bg-white p-6 rounded-xl text-center">
+          <p className="text-gray-500">Nenhuma taxa cadastrada</p>
+          <p className="text-xs text-gray-400 mt-1">Adicione taxas para bairros específicos</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {deliveryFees.map(fee => (
+            <div key={fee.id} className="bg-white p-4 rounded-xl shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-base font-semibold text-gray-800">{fee.neighborhood}</h3>
+                  <p className="text-xs text-gray-600">
+                    {fee.city || 'Belo Jardim'} - {fee.state || 'PE'}
+                  </p>
+                  <p className="text-lg font-bold text-yellow-400 mt-1">
+                    R$ {fee.fee.toFixed(2)}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEditDeliveryFee(fee)}
+                    className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <IoPencil className="w-5 h-5 text-blue-500" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteDeliveryFee(fee.id)}
+                    className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <IoTrash className="w-5 h-5 text-red-500" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal de Taxa de Entrega */}
+      {showDeliveryFeeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800">
+                {editingDeliveryFee ? 'Editar Taxa' : 'Nova Taxa'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowDeliveryFeeModal(false);
+                  setEditingDeliveryFee(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <IoClose className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Bairro *
+                </label>
+                <input
+                  type="text"
+                  className="w-full bg-gray-50 rounded-lg p-3 text-gray-800 border border-gray-200 focus:border-yellow-400 outline-none"
+                  value={deliveryFeeForm.neighborhood}
+                  onChange={(e) => setDeliveryFeeForm({ ...deliveryFeeForm, neighborhood: e.target.value })}
+                  placeholder="Ex: Centro, Boa Vista, etc."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Cidade
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-gray-50 rounded-lg p-3 text-gray-800 border border-gray-200 focus:border-yellow-400 outline-none"
+                    value={deliveryFeeForm.city}
+                    onChange={(e) => setDeliveryFeeForm({ ...deliveryFeeForm, city: e.target.value })}
+                    placeholder="Belo Jardim"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Estado
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={2}
+                    className="w-full bg-gray-50 rounded-lg p-3 text-gray-800 border border-gray-200 focus:border-yellow-400 outline-none uppercase"
+                    value={deliveryFeeForm.state}
+                    onChange={(e) => setDeliveryFeeForm({ ...deliveryFeeForm, state: e.target.value.toUpperCase() })}
+                    placeholder="PE"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Taxa de Entrega (R$) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="w-full bg-gray-50 rounded-lg p-3 text-gray-800 border border-gray-200 focus:border-yellow-400 outline-none"
+                  value={deliveryFeeForm.fee}
+                  onChange={(e) => setDeliveryFeeForm({ ...deliveryFeeForm, fee: e.target.value })}
+                  placeholder="5.00"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowDeliveryFeeModal(false);
+                  setEditingDeliveryFee(null);
+                }}
+                className="flex-1 py-3 rounded-xl font-semibold border-2 border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveDeliveryFee}
+                className="flex-1 py-3 rounded-xl font-semibold bg-yellow-400 text-gray-800 hover:bg-yellow-500 transition-colors"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   const renderCategories = () => {
     // Ordenar categorias pela ordem definida
@@ -807,17 +1102,6 @@ export default function AdminPage() {
           )}
         </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-800 mb-2">Banner Promocional (URL)</label>
-          <input
-            type="url"
-            className="w-full bg-gray-50 rounded-lg p-3 text-gray-800 border border-gray-200 focus:border-yellow-400 outline-none"
-            value={banner}
-            onChange={(e) => setBanner(e.target.value)}
-            onBlur={() => updateStoreSettings({ banner })}
-            placeholder="https://exemplo.com/banner.png"
-          />
-        </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm">
@@ -884,12 +1168,12 @@ export default function AdminPage() {
         )}
       </header>
 
-      <div className="flex bg-white border-b border-gray-100">
-        {['dashboard', 'products', 'categories', 'settings'].map(tab => (
+      <div className="flex bg-white border-b border-gray-100 overflow-x-auto">
+        {['dashboard', 'products', 'categories', 'delivery', 'settings'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === tab
                 ? 'border-yellow-400 text-yellow-400'
                 : 'border-transparent text-gray-600'
@@ -898,6 +1182,7 @@ export default function AdminPage() {
             {tab === 'dashboard' && 'Dashboard'}
             {tab === 'products' && 'Produtos'}
             {tab === 'categories' && 'Categorias'}
+            {tab === 'delivery' && 'Taxas'}
             {tab === 'settings' && 'Configurações'}
           </button>
         ))}
@@ -907,6 +1192,7 @@ export default function AdminPage() {
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'products' && renderProducts()}
         {activeTab === 'categories' && renderCategories()}
+        {activeTab === 'delivery' && renderDeliveryFees()}
         {activeTab === 'settings' && renderSettings()}
       </div>
 
@@ -1030,8 +1316,11 @@ export default function AdminPage() {
                             type="number"
                             step="0.01"
                             className="flex-1 bg-white rounded-lg p-2 text-gray-800 border border-orange-300 focus:border-orange-400 outline-none text-sm"
-                            value={size.promotionPrice || ''}
-                            onChange={(e) => updateSize(size.id, 'promotionPrice', parseFloat(e.target.value) || 0)}
+                            value={size.promotionPrice !== undefined ? size.promotionPrice : ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                              updateSize(size.id, 'promotionPrice', value);
+                            }}
                             placeholder="Preço promocional"
                           />
                         )}
@@ -1163,8 +1452,11 @@ export default function AdminPage() {
                             type="number"
                             step="0.01"
                             className="flex-1 bg-white rounded-lg p-2 text-gray-800 border border-orange-300 focus:border-orange-400 outline-none text-sm"
-                            value={edge.promotionPrice || ''}
-                            onChange={(e) => updateEdge(edge.id, 'promotionPrice', parseFloat(e.target.value) || 0)}
+                            value={edge.promotionPrice !== undefined ? edge.promotionPrice : ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                              updateEdge(edge.id, 'promotionPrice', value);
+                            }}
                             placeholder="Preço promocional"
                           />
                         )}

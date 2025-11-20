@@ -33,9 +33,16 @@ export default function Header({ storeName: propStoreName, isOpen: propIsOpen }:
         )}
         <h1 className="text-xl font-bold text-gray-800 mb-1">{storeName}</h1>
         {!loading && (
-          <div className="flex items-center gap-2 justify-center">
-            <div className={`w-2 h-2 rounded-full ${isOpen ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span className="text-sm text-gray-600">{isOpen ? 'Aberto agora' : 'Fechado'}</span>
+          <div className="flex flex-col items-center gap-1 justify-center">
+            <div className="flex items-center gap-2 justify-center">
+              <div className={`w-2 h-2 rounded-full ${isOpen ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-sm text-gray-600">{isOpen ? 'Aberto agora' : 'Fechado'}</span>
+            </div>
+            {!isOpen && settings?.openingTime && settings?.closingTime && (
+              <span className="text-xs text-gray-500">
+                Funcionamento: {settings.openingTime} às {settings.closingTime}
+              </span>
+            )}
           </div>
         )}
       </div>

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import SearchBar from '@/components/SearchBar';
 import CategoryChip from '@/components/CategoryChip';
-import PromotionalBanner from '@/components/PromotionalBanner';
 import ProductCard from '@/components/ProductCard';
 import ProductModal from '@/components/ProductModal';
 import FloatingCart from '@/components/FloatingCart';
@@ -14,6 +13,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useOrders } from '@/contexts/OrdersContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useProducts } from '@/contexts/ProductsContext';
+import { useStoreSettings } from '@/contexts/StoreSettingsContext';
 import { Product } from '@/lib/data';
 
 export default function HomePage() {
@@ -23,6 +23,9 @@ export default function HomePage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { addToCart } = useCart();
+  const { settings } = useStoreSettings();
+  
+  const isStoreOpen = settings?.isOpen ?? true;
   const { getUserOrders, getCurrentCustomerName } = useOrders();
   const { categories } = useCategories();
   const { products } = useProducts();
@@ -56,8 +59,8 @@ export default function HomePage() {
       return matchesSearch && isPromotional;
     }
     const matchesCategory = !selectedCategory || product.category === selectedCategory;
-    // Excluir produtos promocionais da categoria normal (eles aparecem na seção de promoções)
-    return matchesSearch && matchesCategory && !isPromotional;
+    // Mostrar todos os produtos da categoria, incluindo os promocionais
+    return matchesSearch && matchesCategory;
   });
 
   // Separar produtos promocionais
@@ -68,12 +71,12 @@ export default function HomePage() {
   });
   
   // Agrupar produtos por categoria e ordenar pela ordem definida
-  // Excluir produtos promocionais da categoria normal (eles vão para promoções)
+  // Incluir todos os produtos nas categorias, mesmo os promocionais
   const productsByCategory = categories
     .map(category => ({
       category,
       products: filteredProducts.filter(product => 
-        product.category === category.id && !hasPromotion(product)
+        product.category === category.id
       )
     }))
     .filter(group => group.products.length > 0)
@@ -84,6 +87,14 @@ export default function HomePage() {
     });
 
   const handleAddToCart = (product: Product) => {
+    // Verificar se a loja está aberta
+    if (!isStoreOpen) {
+      const openingTime = settings?.openingTime || '18:00';
+      const closingTime = settings?.closingTime || '23:00';
+      alert(`A loja está fechada no momento.\n\nHorário de funcionamento: ${openingTime} às ${closingTime}`);
+      return;
+    }
+    
     // Se o produto tem variações, abrir modal
     const hasVariations = (product.sizes && product.sizes.length > 0) ||
                          (product.flavors && product.flavors.length > 0) ||
@@ -127,13 +138,8 @@ export default function HomePage() {
             ))}
         </div>
 
-        {/* Banner Promocional */}
-        <PromotionalBanner
-          onPress={() => setSelectedCategory('1')}
-        />
-
-        {/* Seção de Promoções */}
-        {promotionalProducts.length > 0 && (
+        {/* Seção de Promoções - Só aparece se nenhuma categoria específica estiver selecionada */}
+        {promotionalProducts.length > 0 && !selectedCategory && (
           <div className="mt-6 mb-8">
             <div className="flex items-center gap-2 px-4 mb-4">
               <div

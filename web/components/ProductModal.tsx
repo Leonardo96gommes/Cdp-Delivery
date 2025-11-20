@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { IoClose } from 'react-icons/io5';
 import { Product } from '@/lib/data';
-import { useCart } from '@/contexts/CartContext';
+import { useCart, CartItem } from '@/contexts/CartContext';
+import { useStoreSettings } from '@/contexts/StoreSettingsContext';
 import { useRouter } from 'next/navigation';
 
 interface ProductModalProps {
@@ -16,9 +17,12 @@ interface ProductModalProps {
 export default function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
   const router = useRouter();
   const { addToCart } = useCart();
+  const { settings } = useStoreSettings();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedFlavors, setSelectedFlavors] = useState<string[]>([]);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
+  
+  const isStoreOpen = settings?.isOpen ?? true;
 
   // Reset selections when product changes
   useEffect(() => {
@@ -133,6 +137,14 @@ export default function ProductModal({ product, isOpen, onClose }: ProductModalP
   };
 
   const handleAddToCart = () => {
+    // Verificar se a loja está aberta
+    if (!isStoreOpen) {
+      const openingTime = settings?.openingTime || '18:00';
+      const closingTime = settings?.closingTime || '23:00';
+      alert(`A loja está fechada no momento.\n\nHorário de funcionamento: ${openingTime} às ${closingTime}`);
+      return;
+    }
+    
     const selectedSizeObj = sizes.find(s => s.id === selectedSize);
     const selectedEdgeObj = edges.find(e => e.id === selectedEdge);
     
