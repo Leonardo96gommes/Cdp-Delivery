@@ -434,7 +434,6 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 **Leonardo Gomes**
 
 - GitHub: [@Leonardo96gommes](https://github.com/Leonardo96gommes)
-- Email: [seu-email@exemplo.com]
 
 ## 🙏 Agradecimentos
 
