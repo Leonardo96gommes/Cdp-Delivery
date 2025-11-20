@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { IoTime, IoCheckmarkCircle, IoCloseCircle } from 'react-icons/io5';
+import { IoTime, IoCheckmarkCircle, IoCloseCircle, IoPrint } from 'react-icons/io5';
 import { useOrders, Order } from '@/contexts/OrdersContext';
 import BottomNavigation from '@/components/BottomNavigation';
 import Header from '@/components/Header';
@@ -65,6 +65,308 @@ export default function OrdersPage() {
 
   const getStatusConfig = (status: Order['status']) => {
     return statusConfig[status] || statusConfig['Aprovado'];
+  };
+
+  const handlePrintOrder = (order: Order) => {
+    // Criar uma nova janela para impressão
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    // Formatar data
+    const orderDate = new Date(order.createdAt);
+    const formattedDate = orderDate.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    // HTML para impressão estilo iFood
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Pedido #${order.id.slice(-6)}</title>
+          <style>
+            @media print {
+              @page {
+                margin: 0;
+                size: 80mm auto;
+              }
+              * {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+            }
+            body {
+              font-family: 'Courier New', monospace;
+              max-width: 80mm;
+              margin: 0 auto;
+              padding: 15px 10px;
+              color: #000;
+              background: #fff;
+              font-size: 11px;
+              line-height: 1.4;
+            }
+            .header {
+              text-align: center;
+              padding-bottom: 15px;
+              border-bottom: 1px dashed #000;
+              margin-bottom: 15px;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 18px;
+              font-weight: bold;
+              letter-spacing: 1px;
+            }
+            .header .subtitle {
+              font-size: 10px;
+              margin-top: 5px;
+              color: #333;
+            }
+            .order-number {
+              text-align: center;
+              background: #000;
+              color: #fff;
+              padding: 8px;
+              margin: 15px 0;
+              font-size: 14px;
+              font-weight: bold;
+              letter-spacing: 2px;
+            }
+            .section {
+              margin-bottom: 15px;
+              padding-bottom: 10px;
+              border-bottom: 1px dashed #ccc;
+            }
+            .section-title {
+              font-weight: bold;
+              font-size: 12px;
+              margin-bottom: 8px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .info-row {
+              display: flex;
+              justify-content: space-between;
+              margin: 4px 0;
+              font-size: 10px;
+            }
+            .info-label {
+              font-weight: bold;
+              min-width: 80px;
+            }
+            .info-value {
+              text-align: right;
+              flex: 1;
+            }
+            .items-list {
+              margin-top: 10px;
+            }
+            .item-row {
+              margin-bottom: 12px;
+              padding-bottom: 8px;
+              border-bottom: 1px dotted #ccc;
+            }
+            .item-header {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 4px;
+            }
+            .item-quantity {
+              font-weight: bold;
+              margin-right: 5px;
+            }
+            .item-name {
+              font-weight: bold;
+              flex: 1;
+              text-transform: uppercase;
+              font-size: 11px;
+            }
+            .item-price {
+              font-weight: bold;
+              text-align: right;
+            }
+            .item-details {
+              font-size: 9px;
+              color: #555;
+              margin-left: 20px;
+              margin-top: 3px;
+              line-height: 1.3;
+            }
+            .item-detail-line {
+              margin: 2px 0;
+            }
+            .summary {
+              margin-top: 15px;
+              padding-top: 10px;
+              border-top: 2px solid #000;
+            }
+            .summary-row {
+              display: flex;
+              justify-content: space-between;
+              margin: 6px 0;
+              font-size: 11px;
+            }
+            .summary-label {
+              font-weight: bold;
+            }
+            .summary-total {
+              margin-top: 10px;
+              padding-top: 10px;
+              border-top: 2px solid #000;
+              font-size: 14px;
+              font-weight: bold;
+            }
+            .footer {
+              margin-top: 20px;
+              text-align: center;
+              font-size: 9px;
+              color: #666;
+              padding-top: 15px;
+              border-top: 1px dashed #000;
+            }
+            .status-badge {
+              display: inline-block;
+              background: #000;
+              color: #fff;
+              padding: 4px 8px;
+              font-size: 9px;
+              font-weight: bold;
+              text-transform: uppercase;
+              margin-top: 5px;
+            }
+            .divider {
+              text-align: center;
+              margin: 10px 0;
+              font-size: 10px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>NOSTRAPIZZA</h1>
+            <div class="subtitle">Comprovante de Pedido</div>
+          </div>
+          
+          <div class="order-number">
+            PEDIDO #${order.id.slice(-6)}
+          </div>
+
+          <div class="section">
+            <div class="section-title">📅 Data e Hora</div>
+            <div class="info-row">
+              <span class="info-value">${formattedDate}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">👤 Cliente</div>
+            <div class="info-row">
+              <span class="info-label">Nome:</span>
+              <span class="info-value">${order.customerName}</span>
+            </div>
+            ${order.phone ? `
+            <div class="info-row">
+              <span class="info-label">Telefone:</span>
+              <span class="info-value">${order.phone}</span>
+            </div>
+            ` : ''}
+          </div>
+
+          <div class="section">
+            <div class="section-title">📍 ${order.address.includes('Retirar na loja') ? 'Retirada' : 'Entrega'}</div>
+            <div class="info-row">
+              <span class="info-value" style="text-align: left; word-break: break-word;">${order.address}</span>
+            </div>
+            ${order.referencePoint ? `
+            <div class="info-row" style="margin-top: 5px;">
+              <span class="info-label">Referência:</span>
+              <span class="info-value" style="text-align: left;">${order.referencePoint}</span>
+            </div>
+            ` : ''}
+          </div>
+
+          <div class="section">
+            <div class="section-title">💳 Pagamento</div>
+            <div class="info-row">
+              <span class="info-value">${order.paymentMethod.toUpperCase()}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">📦 Itens do Pedido</div>
+            <div class="items-list">
+              ${order.items.map(item => `
+                <div class="item-row">
+                  <div class="item-header">
+                    <div style="display: flex; align-items: center;">
+                      <span class="item-quantity">${item.quantity}x</span>
+                      <span class="item-name">${item.name}</span>
+                    </div>
+                    <span class="item-price">R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
+                  </div>
+                  <div class="item-details">
+                    ${item.variations?.size ? `<div class="item-detail-line">• Tamanho: ${item.variations.size}</div>` : ''}
+                    ${item.variations?.flavor ? `<div class="item-detail-line">• Sabor: ${item.variations.flavor}</div>` : ''}
+                    ${item.variations?.edge ? `<div class="item-detail-line">• Borda: ${item.variations.edge}</div>` : ''}
+                    ${item.variations?.extras && item.variations.extras.length > 0 ? `<div class="item-detail-line">• Extras: ${item.variations.extras.join(', ')}</div>` : ''}
+                    <div class="item-detail-line" style="margin-top: 4px; color: #888;">
+                      R$ ${item.price.toFixed(2).replace('.', ',')} un.
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="summary">
+            <div class="summary-row">
+              <span class="summary-label">Subtotal</span>
+              <span>R$ ${order.subtotal.toFixed(2).replace('.', ',')}</span>
+            </div>
+            ${order.deliveryFee > 0 ? `
+            <div class="summary-row">
+              <span class="summary-label">Taxa de Entrega</span>
+              <span>R$ ${order.deliveryFee.toFixed(2).replace('.', ',')}</span>
+            </div>
+            ` : ''}
+            <div class="summary-row summary-total">
+              <span>TOTAL</span>
+              <span>R$ ${order.total.toFixed(2).replace('.', ',')}</span>
+            </div>
+          </div>
+
+          <div class="divider">━━━━━━━━━━━━━━━━━━</div>
+
+          <div class="section" style="border: none; padding: 0;">
+            <div class="status-badge">Status: ${order.status.toUpperCase()}</div>
+          </div>
+
+          <div class="footer">
+            <div style="margin-bottom: 10px;">
+              <strong>Obrigado pela preferência!</strong>
+            </div>
+            <div>NostraPizza</div>
+            <div style="margin-top: 10px; font-size: 8px;">
+              Este é um comprovante de pedido
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // Aguardar o conteúdo carregar antes de imprimir
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    };
   };
 
   if (!customerName) {
@@ -214,6 +516,17 @@ export default function OrdersPage() {
                         <span className="text-gray-600">Pagamento:</span>
                         <span className="text-gray-800">{order.paymentMethod}</span>
                       </div>
+                    </div>
+
+                    {/* Botão de Imprimir */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => handlePrintOrder(order)}
+                        className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-800 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                      >
+                        <IoPrint className="w-5 h-5" />
+                        Imprimir Pedido
+                      </button>
                     </div>
                   </div>
                 </div>

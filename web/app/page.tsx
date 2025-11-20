@@ -7,10 +7,10 @@ import SearchBar from '@/components/SearchBar';
 import CategoryChip from '@/components/CategoryChip';
 import ProductCard from '@/components/ProductCard';
 import ProductModal from '@/components/ProductModal';
+import ProductSection from '@/components/ProductSection';
 import FloatingCart from '@/components/FloatingCart';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useCart } from '@/contexts/CartContext';
-import { useOrders } from '@/contexts/OrdersContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useProducts } from '@/contexts/ProductsContext';
 import { useStoreSettings } from '@/contexts/StoreSettingsContext';
@@ -26,14 +26,8 @@ export default function HomePage() {
   const { settings } = useStoreSettings();
   
   const isStoreOpen = settings?.isOpen ?? true;
-  const { getUserOrders, getCurrentCustomerName } = useOrders();
   const { categories } = useCategories();
   const { products } = useProducts();
-
-  // Buscar pedidos do usuário atual
-  const currentCustomerName = getCurrentCustomerName();
-  const userOrders = currentCustomerName ? getUserOrders(currentCustomerName) : [];
-  const lastUserOrder = userOrders.length > 0 ? userOrders[0] : null;
 
   // Função para verificar se um produto tem promoção
   const hasPromotion = (product: Product): boolean => {
@@ -139,78 +133,24 @@ export default function HomePage() {
         </div>
 
         {/* Seção de Promoções - Só aparece se nenhuma categoria específica estiver selecionada */}
-        {promotionalProducts.length > 0 && !selectedCategory && (
-          <div className="mt-6 mb-8">
-            <div className="flex items-center gap-2 px-4 mb-4">
-              <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: '#FF9800' }}
-              />
-              <h2 className="text-xl font-bold text-gray-800">Promoções</h2>
-            </div>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-4 px-2 md:grid-cols-3 lg:grid-cols-4 md:gap-2">
-              {promotionalProducts.map(product => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={() => handleAddToCart(product)}
-                  onClick={() => handleAddToCart(product)}
-                />
-              ))}
-            </div>
-          </div>
+        {!selectedCategory && (
+          <ProductSection
+            title="Promoções"
+            color="#FF9800"
+            products={promotionalProducts}
+            onAddToCart={handleAddToCart}
+          />
         )}
 
-        {/* Último Pedido do Usuário */}
-        {lastUserOrder && lastUserOrder.items.length > 0 && (
-          <div className="mt-6 mb-2">
-            <div className="flex justify-between items-center px-4 mb-3">
-              <h2 className="text-xl font-bold text-gray-800">Seu último pedido</h2>
-            </div>
-            {lastUserOrder.items.map((item, index) => {
-              // Buscar produto completo para exibir
-              const product = products.find(p => p.id === item.id) || {
-                id: item.id,
-                name: item.name,
-                description: '',
-                basePrice: item.price,
-                image: 'https://via.placeholder.com/400',
-                category: '',
-              };
-              return (
-                <ProductCard
-                  key={`${item.id}-${index}`}
-                  product={product}
-                  isHorizontal={true}
-                  onAddToCart={() => handleAddToCart(product)}
-                  onClick={() => handleAddToCart(product)}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {/* Produtos por Categoria */}
+        {/* Produtos por Categoria - Padrão centralizado para todas as seções */}
         {productsByCategory.map(({ category, products: categoryProducts }) => (
-          <div key={category.id} className="mt-6 mb-8">
-            <div className="flex items-center gap-2 px-4 mb-4">
-              <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: category.color }}
-              />
-              <h2 className="text-xl font-bold text-gray-800">{category.name}</h2>
-            </div>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-4 px-2 md:grid-cols-3 lg:grid-cols-4 md:gap-2">
-              {categoryProducts.map(product => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={() => handleAddToCart(product)}
-                  onClick={() => handleAddToCart(product)}
-                />
-              ))}
-            </div>
-          </div>
+          <ProductSection
+            key={category.id}
+            title={category.name}
+            color={category.color}
+            products={categoryProducts}
+            onAddToCart={handleAddToCart}
+          />
         ))}
       </div>
 

@@ -151,7 +151,7 @@ export default function ProductCard({ product, onAddToCart, isHorizontal = false
   return (
     <div 
       onClick={onClick}
-      className="bg-white rounded-2xl w-full shadow-sm hover:shadow-md transition-shadow overflow-hidden cursor-pointer relative"
+      className="bg-white rounded-2xl w-full shadow-sm hover:shadow-md transition-shadow overflow-hidden cursor-pointer relative flex flex-col h-full"
     >
       <div className="relative">
         {hasPromotion(product) && (
@@ -167,10 +167,10 @@ export default function ProductCard({ product, onAddToCart, isHorizontal = false
           className="w-full h-[140px] md:h-[180px] object-cover"
         />
       </div>
-      <div className="p-2 md:p-3">
+      <div className="p-2 md:p-3 flex flex-col flex-1">
         <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-1 line-clamp-2">{product.name}</h3>
-        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{product.description}</p>
-        <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+        <p className="text-xs text-gray-600 mb-2 line-clamp-2 flex-1">{product.description}</p>
+        <div className="flex items-end justify-between gap-2 mt-auto">
           <div className="flex flex-col">
             {hasPriceVariations(product) && (
               <span className="text-xs text-gray-500">A partir de</span>
@@ -189,7 +189,7 @@ export default function ProductCard({ product, onAddToCart, isHorizontal = false
           <button
             onClick={handleAddToCartClick}
             disabled={!isStoreOpen}
-            className={`px-3 py-1.5 rounded-full font-semibold text-xs md:text-sm transition-colors w-full md:w-auto ${
+            className={`px-3 py-1.5 rounded-full font-semibold text-xs md:text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
               isStoreOpen
                 ? 'bg-yellow-400 text-white hover:bg-yellow-500'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
