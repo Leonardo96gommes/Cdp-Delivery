@@ -1,200 +1,80 @@
 # 🚀 Guia de Deploy na Vercel
 
-Este guia mostra como configurar corretamente o projeto NostraPizza na Vercel.
+Este guia mostra como fazer deploy do projeto NostraPizza na Vercel.
 
-## ⚠️ Problemas Comuns
+## ✅ Deploy Simples
 
-### Erro: "No Next.js version detected" ou "NOT_FOUND"
-O erro acontece quando a Vercel não encontra o `package.json` do Next.js porque o projeto está na pasta `web/`, mas a Vercel está procurando na raiz do repositório.
+Agora que o projeto está na raiz do repositório, o deploy na Vercel é muito simples!
 
-### Erro: "Command 'npm install' exited with SIGKILL" 
-**⚠️ ATENÇÃO**: Este erro geralmente significa que o **Root Directory NÃO está configurado corretamente**!
-
-Quando isso acontece:
-- A Vercel está tentando instalar dependências na raiz do projeto
-- Não encontra o `package.json` com Next.js
-- O processo é terminado (SIGKILL)
-
-**SOLUÇÃO IMEDIATA**: 
-1. Verifique se o Root Directory está configurado para `web` (veja seção abaixo)
-2. Se não estiver configurado, **configure AGORA**
-3. Limpe o cache: **Deployments** > **...** > **Clear Build Cache**
-4. Faça um **Redeploy** completo
-
----
-
-## ✅ Solução: Configurar Root Directory no Painel da Vercel
-
-**Esta é a ÚNICA forma de resolver o problema!** Você DEVE configurar o Root Directory no painel da Vercel.
-
-### 📸 Passo a Passo Detalhado:
-
-#### Opção A: Se você JÁ TEM um projeto na Vercel
-
-1. **Acesse**: https://vercel.com/dashboard
-2. **Clique no seu projeto** (nome do projeto)
-3. **Vá em "Settings"** (ícone de engrenagem ⚙️ no topo)
-4. **No menu lateral esquerdo, clique em "General"**
-5. **Role a página para baixo** até encontrar a seção **"Root Directory"**
-6. **Clique no botão "Edit"** ao lado de "Root Directory"
-7. **Selecione a pasta `web`**:
-   - Clique no campo de texto
-   - Digite: `web` (em minúsculas)
-   - Ou navegue: clique em "Browse" e selecione a pasta `web`
-8. **Clique em "Save"** (botão azul)
-9. **IMPORTANTE**: Agora faça um **novo deploy**:
-   - Vá em "Deployments" (no menu superior)
-   - Clique nos **três pontinhos (...)** do último deployment
-   - Selecione **"Redeploy"**
-   - Ou simplesmente faça um novo commit/push (a Vercel detectará automaticamente)
-
-#### Opção B: Se você ESTÁ CRIANDO um novo projeto
+### Passo a Passo:
 
 1. **Acesse**: https://vercel.com/dashboard
 2. **Clique em "Add New..."** > **"Project"**
 3. **Importe seu repositório** do GitHub
-4. **ANTES de clicar em "Deploy"**, configure:
-   - **Root Directory**: Clique em "Edit" e selecione/digite `web`
-   - **Framework Preset**: Next.js (deve detectar automaticamente após configurar Root Directory)
-5. **Configure as Environment Variables** (veja seção abaixo)
+   - Selecione o repositório `Cdp-Delivery` (ou seu repositório)
+4. **Configure o projeto**:
+   - **Framework Preset**: Next.js (deve ser detectado automaticamente)
+   - **Root Directory**: Deixe **VAZIO** (o projeto está na raiz)
+   - **Build Command**: Deixe padrão (`npm run build`)
+   - **Output Directory**: Deixe padrão (`.next`)
+5. **Configure as Variáveis de Ambiente** (veja seção abaixo)
 6. **Clique em "Deploy"**
 
-### 🔍 Como Verificar se está Configurado Corretamente:
+### ⚙️ Configuração Recomendada:
 
-1. Vá em **Settings** > **General**
-2. Verifique que **"Root Directory"** mostra: `web`
-3. Verifique que **"Framework Preset"** mostra: `Next.js`
-4. Se não estiver correto, clique em "Edit" e corrija
+- **Framework Preset**: Next.js ✅
+- **Root Directory**: (vazio) ✅
+- **Build Command**: (deixar padrão)
+- **Output Directory**: `.next` (padrão)
+- **Install Command**: (deixar padrão)
 
-### ⚠️ IMPORTANTE
-
-- **NÃO** remova essa configuração depois
-- A Vercel usará a pasta `web/` como diretório raiz do projeto Next.js
-- Todos os comandos (install, build, dev) serão executados dentro da pasta `web/`
-- **Após configurar**, você DEVE fazer um novo deploy (não usará cache do deploy anterior)
-
-### 🔧 Verificações Importantes
-
-Se você está recebendo erros (SIGKILL, NOT_FOUND, etc.), verifique:
-
-1. **Root Directory está configurado?**
-   - Vá em **Settings** > **General** > **Root Directory**
-   - Deve mostrar: `web` (não vazio, não "/", não "." )
-   - Se estiver diferente, **configure para `web`** e salve
-
-2. **Cache limpo?**
-   - Vá em **Deployments** > clique nos **...** do último deployment
-   - Selecione **"Clear Build Cache"**
-   - Faça um novo **Redeploy**
-
-3. **Arquivo `web/package.json` existe?**
-   - Verifique no seu repositório GitHub
-   - O arquivo deve existir em `web/package.json`
-   - Deve conter `"next"` nas dependências
-
-4. **Deploy é novo?**
-   - Após configurar o Root Directory, você **DEVE fazer um novo deploy**
-   - Não basta apenas fazer commit/push
-   - Vá em **Deployments** > **Redeploy**
-
-### 🔄 Solução Alternativa (se o Root Directory não funcionar)
-
-Um arquivo `package.json` foi criado na raiz do projeto como fallback. Isso pode ajudar a Vercel a detectar o projeto, mas **ainda é necessário configurar o Root Directory para `web`** no painel da Vercel.
-
-**Importante**: O `package.json` na raiz NÃO substitui a necessidade de configurar o Root Directory! Você DEVE configurar o Root Directory para `web` no painel da Vercel.
-
-## 📋 Checklist de Deploy
+## 📋 Variáveis de Ambiente
 
 ### Antes do Deploy:
 
-- [ ] **Variáveis de Ambiente Configuradas** na Vercel:
-  - `NEXT_PUBLIC_FIREBASE_API_KEY`
-  - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-  - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-  - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-  - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-  - `NEXT_PUBLIC_FIREBASE_APP_ID`
-  - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` (opcional)
-  - `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` (opcional)
-  - `CLOUDINARY_API_KEY` (opcional)
-  - `CLOUDINARY_API_SECRET` (opcional)
-  - `CLOUDINARY_URL` (opcional)
+Configure todas as variáveis de ambiente na Vercel:
 
-- [ ] **Root Directory configurado** para `web`
-- [ ] **Build Command**: Deixar padrão ou usar `npm install && npm run build`
-- [ ] **Output Directory**: `.next`
-- [ ] **Install Command**: `npm install`
+1. **Acesse seu projeto** na Vercel
+2. **Vá em Settings** > **Environment Variables**
+3. **Adicione cada variável** uma por uma:
+
+#### Firebase (Obrigatórias):
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=sua-api-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=seu-projeto.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=seu-projeto-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=seu-projeto.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=seu-sender-id
+NEXT_PUBLIC_FIREBASE_APP_ID=seu-app-id
+```
+
+#### Cloudinary (Opcionais):
+```
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=seu-cloud-name
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=seu-upload-preset
+CLOUDINARY_API_KEY=sua-api-key
+CLOUDINARY_API_SECRET=seu-api-secret
+CLOUDINARY_URL=cloudinary://api-key:api-secret@cloud-name
+```
+
+4. **Marque todas para**: Production, Preview e Development
+5. **Clique em "Save"** para cada variável
+6. **Faça um novo deploy** para aplicar as mudanças
 
 ### Como Adicionar Variáveis de Ambiente na Vercel:
 
-1. Acesse seu projeto na Vercel
-2. Vá em **Settings** > **Environment Variables**
-3. Adicione cada variável uma por uma:
+1. No painel do projeto, vá em **Settings** > **Environment Variables**
+2. Clique em **"Add New"**
+3. Preencha:
    - **Key**: Nome da variável (ex: `NEXT_PUBLIC_FIREBASE_API_KEY`)
    - **Value**: Valor da variável
-   - **Environments**: Selecione "Production", "Preview" e "Development"
+   - **Environments**: Marque "Production", "Preview" e "Development"
 4. Clique em **Save**
-5. Faça um novo deploy para aplicar as mudanças
+5. Repita para cada variável
 
-## 🔧 Configuração Recomendada no Painel da Vercel
+## 🔧 Pós-Deploy
 
-### Settings > General:
-
-- **Root Directory**: `web`
-- **Build Command**: (deixar vazio ou usar padrão)
-- **Output Directory**: `.next`
-- **Install Command**: (deixar vazio ou usar padrão)
-- **Development Command**: (deixar vazio ou usar padrão)
-- **Framework Preset**: Next.js
-
-## 🐛 Troubleshooting
-
-### Erro: "Build Failed"
-- Verifique se todas as dependências estão no `package.json`
-- Verifique se há erros de TypeScript no build
-- Confira os logs de build na Vercel
-
-### Erro: "Command 'npm install' exited with SIGKILL" ou "SIGKILL"
-Este erro geralmente acontece por:
-- **Root Directory não configurado**: A Vercel está tentando instalar na raiz ao invés de `web/`
-- **Solução**:
-  1. **VERIFIQUE** se o Root Directory está configurado para `web` no painel da Vercel
-  2. Vá em **Settings** > **General** > **Root Directory** e confirme que está `web`
-  3. Se não estiver, configure para `web` e faça um novo deploy
-  4. Limpe o cache: **Deployments** > **...** > **Clear Build Cache**
-  5. Faça um **Redeploy** completo
-  
-- **Memória insuficiente** (menos comum):
-  - O build pode estar usando muita memória
-  - Tente otimizar dependências desnecessárias
-  - Use `npm ci` ao invés de `npm install` (já está configurado)
-
-**IMPORTANTE**: O erro SIGKILL geralmente significa que o Root Directory NÃO está configurado corretamente. Verifique isso primeiro!
-
-### Erro: "Function not found" ou "404"
-- Certifique-se de que o Root Directory está configurado para `web`
-- Verifique se o build está gerando o diretório `.next`
-- Confira se as rotas estão corretas no `app/`
-
-### Erro: "Environment variable not found"
-- Verifique se todas as variáveis de ambiente foram adicionadas
-- Certifique-se de que as variáveis começam com `NEXT_PUBLIC_` quando necessário
-- Faça um novo deploy após adicionar variáveis
-
-### Páginas não encontradas (404)
-- Verifique se o Root Directory está configurado corretamente
-- Confira se os arquivos estão na pasta `web/app/`
-- Verifique se há algum erro no build
-
-## 📚 Recursos Adicionais
-
-- [Documentação Vercel - Root Directory](https://vercel.com/docs/projects/overview/root-directory)
-- [Documentação Vercel - Environment Variables](https://vercel.com/docs/projects/environment-variables)
-- [Documentação Next.js - Deployment](https://nextjs.org/docs/deployment)
-
-## ✨ Após o Deploy
-
-Após configurar tudo corretamente:
+Após o deploy:
 
 1. Acesse o URL gerado pela Vercel
 2. Verifique se a página inicial carrega
@@ -205,5 +85,41 @@ Após configurar tudo corretamente:
    - `/admin` - Painel admin
    - `/login` - Login
 
-Se ainda houver problemas, verifique os logs de build e runtime na Vercel.
+## 🐛 Troubleshooting
 
+### Erro: "Build Failed"
+- Verifique se todas as dependências estão no `package.json`
+- Verifique se há erros de TypeScript no build
+- Confira os logs de build na Vercel (clique no deployment)
+
+### Erro: "Environment variable not found"
+- Verifique se todas as variáveis de ambiente foram adicionadas
+- Certifique-se de que as variáveis começam com `NEXT_PUBLIC_` quando necessário
+- Faça um novo deploy após adicionar variáveis
+
+### Erro: "Function not found" ou "404"
+- Verifique se o Framework Preset está configurado como "Next.js"
+- Verifique se o Root Directory está **VAZIO** (não preenchido)
+- Confira se as rotas estão corretas no `app/`
+
+### Páginas não encontradas (404)
+- Verifique se o Framework Preset está correto
+- Confira se os arquivos estão na pasta `app/`
+- Verifique se há algum erro no build
+
+## 📚 Recursos Adicionais
+
+- [Documentação Vercel - Deploy Next.js](https://vercel.com/docs/frameworks/nextjs)
+- [Documentação Vercel - Environment Variables](https://vercel.com/docs/projects/environment-variables)
+- [Documentação Next.js - Deployment](https://nextjs.org/docs/deployment)
+
+## ✨ Vantagens da Nova Estrutura
+
+- ✅ **Deploy mais simples**: Não precisa configurar Root Directory
+- ✅ **Menos erros**: Evita problemas de caminhos e configurações
+- ✅ **Detecção automática**: A Vercel detecta Next.js automaticamente
+- ✅ **Build mais rápido**: Menos overhead de configuração
+
+---
+
+**Nota**: Se você estava usando o projeto antes com a pasta `web/`, agora tudo está na raiz. Isso simplifica muito o deploy e evita problemas de configuração!

@@ -53,7 +53,7 @@ const firebaseConfig = {
 
 ## 📋 Passo 4: Configurar Variáveis de Ambiente
 
-1. Na pasta `web/`, crie um arquivo chamado `.env.local`
+1. Na raiz do projeto, crie um arquivo chamado `.env.local`
 
 **Windows PowerShell:**
 ```powershell
@@ -179,7 +179,7 @@ Se tudo estiver configurado corretamente:
 
 ### Erro: "Firebase: Error (auth/configuration-not-found)"
 - Verifique se todas as variáveis de ambiente estão corretas
-- Certifique-se de que o arquivo `.env.local` está na pasta `web/`
+- Certifique-se de que o arquivo `.env.local` está na raiz do projeto
 - Reinicie o servidor após criar/editar `.env.local`
 
 ### Erro: "Missing or insufficient permissions"

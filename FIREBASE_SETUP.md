@@ -50,7 +50,7 @@ const firebaseConfig = {
 
 ### 4. Configurar Variáveis de Ambiente
 
-1. Na pasta `web/`, crie um arquivo `.env.local`:
+1. Na raiz do projeto, crie um arquivo `.env.local`:
 
 ```bash
 # Windows PowerShell
@@ -143,7 +143,7 @@ Para melhorar a performance, crie índices compostos no Firestore:
 Crie um arquivo de teste temporário para verificar se tudo está funcionando:
 
 ```typescript
-// web/test-firebase.ts
+// scripts/test-firebase.ts
 import { db } from './lib/firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 
@@ -190,7 +190,7 @@ Após a configuração, o banco terá as seguintes collections:
 
 ### Erro: "Firebase: Error (auth/configuration-not-found)"
 - Verifique se todas as variáveis de ambiente estão corretas
-- Certifique-se de que o arquivo `.env.local` está na pasta `web/`
+- Certifique-se de que o arquivo `.env.local` está na raiz do projeto
 - Reinicie o servidor de desenvolvimento após criar/editar `.env.local`
 
 ### Erro: "Missing or insufficient permissions"

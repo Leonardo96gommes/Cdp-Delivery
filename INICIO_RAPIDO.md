@@ -14,7 +14,7 @@
 - Registre o app e **copie as credenciais**
 
 ### 3️⃣ Criar Arquivo .env.local
-Na pasta `web/`, crie o arquivo `.env.local`:
+Na raiz do projeto, crie o arquivo `.env.local`:
 
 **Windows PowerShell:**
 ```powershell

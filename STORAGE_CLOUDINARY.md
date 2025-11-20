@@ -54,7 +54,7 @@ Após fazer login, você verá o **Dashboard** com suas credenciais:
 
 ### 4. Configurar Variáveis de Ambiente
 
-No arquivo `web/.env.local`, adicione:
+No arquivo `.env.local` na raiz do projeto, adicione:
 
 ```env
 # Cloudinary - Storage de Imagens

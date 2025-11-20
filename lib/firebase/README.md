@@ -87,7 +87,7 @@ OrderItem: {
 1. Crie um projeto no [Firebase Console](https://console.firebase.google.com/)
 2. Ative o Firestore Database
 3. Copie as credenciais do projeto
-4. Crie um arquivo `.env.local` na pasta `web/`:
+4. Crie um arquivo `.env.local` na raiz do projeto:
 
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
